@@ -1,0 +1,15 @@
+1) create keyspace lab3 with replication = { 'class': 'SimpleStartegy', 'replication_factor': 2 };
+2)create table employeeInfo (emp_id int primary key, emp_name text, designation text, date_of_joining timestamp, salary float, dept_name text);
+
+3) 	BEGIN BATCH 
+insert into employeeInfo(emp_id, emp_name, designation, date_of_joining, salary, dept_name) values (1, 'Rohit', 'Manager', '2021-03-09', 69000, 'HR'); insert into employeeInfo(emp_id, emp_name, designation, date_of_joining, salary, dept_name) values (2, 'Rahul', 'Senior Manager', '2021-03-01', 90000, 'IT'); insert into employeeInfo(emp_id, emp_name, designation, date_of_joining, salary, dept_name) values (3, 'Renuka', 'Senior Manager', '2021-03-11', 96000, 'IT'); insert into employeeInfo(emp_id, emp_name, designation, date_of_joining, salary, dept_name) values (4, 'Ramesh', 'Intern', '2021-03-11', 96000, 'HR'); 
+	APPLY BATCH;
+4) update employeeInfo set emp_name="Rajesh" where emp_id=121;
+
+5) select * from employeeInfoTwo where emp_id in (1,2,3,4) order by salary DESC allow filtering;
+
+6) alter employeeInfo add  projects set<text>;
+
+7) update employeeInfo set projects={'Proj1', 'Proj2'} where emp_id=1;
+
+8) insert into employeeInfo(emp_id, emp_name, designation, date_of_joining, salary, dept_name) values (6, 'Sravan', 'Manager', '2019-09-09', 450000, 'IT') using TTL 15;

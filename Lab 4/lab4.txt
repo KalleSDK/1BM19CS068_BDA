@@ -1,0 +1,172 @@
+withbmsce@bmsce-OptiPlex-3060:~/cassandra/apache-cassandra-3.11.0/bin$ ./cqlsh
+Connected to Test Cluster at 127.0.0.1:9042.
+[cqlsh 5.0.1 | Cassandra 3.11.0 | CQL spec 3.4.4 | Native protocol v4]
+Use HELP for help.
+cqlsh> create keyspace Library with replication = {"class": 'SimpleStrategy',
+'replication_factor':2};
+SyntaxException: line 1:51 no viable alternative at input ':' (... Library with replication =
+{["clas]s":...)
+cqlsh> create keyspace Library with replication = {'class': 'SimpleStrategy', 'replication_factor':2};
+AlreadyExists: Keyspace 'library' already exists
+cqlsh> drop keyspace library
+... ;
+cqlsh> create keyspace Library with replication = {"class": 'SimpleStrategy',
+'replication_factor':2};
+SyntaxException: line 1:51 no viable alternative at input ':' (... Library with replication =
+{["clas]s":...)
+cqlsh> create keyspace Library with replication = {'class': 'SimpleStrategy', 'replication_factor':2};
+cqlsh> create table library_info(
+... stud_id int,
+... counter_value counter,
+... stud_name text,
+... book_name text,
+... book_id int,
+... date_of_issue date,
+... primary key(stud_id));
+InvalidRequest: Error from server: code=2200 [Invalid query] message="No keyspace has been
+specified. USE a keyspace, or explicitly specify keyspace.tablename"
+cqlsh> use library;
+cqlsh:library> create table library_info( stud_id int, counter_value counter, stud_name text,
+book_name text, book_id int, date_of_issue date, primary key(stud_id));
+InvalidRequest: Error from server: code=2200 [Invalid query] message="Cannot mix counter
+and non counter columns in the same table"
+cqlsh:library> create table library_info( stud_id int, counter_value counter, stud_name text,
+book_name text, book_id int, date_of_issue date, primary key(stud_id, stud_name, book_name,
+book_id, date_of_issue));
+cqlsh:library> begin batch
+... insert into library_info(stud_id,stud_name, book_name, book_id, date_of_issue)
+values
+... (1, 'Ramesh', 'life or death', 100, '09-05-2022');apply batch;
+InvalidRequest: Error from server: code=2200 [Invalid query] message="INSERT statements
+are not allowed on counter tables, use UPDATE instead"
+cqlsh:library> update library_info set counter_value = counter_value + 0 where stud_id = 1 and
+stud_name = 'ramesh' and book_id = 110 and date_of_issue = '09-05-2022';
+InvalidRequest: Error from server: code=2200 [Invalid query] message="Unable to coerce
+'09-05-2022' to a formatted date (long)"
+cqlsh:library> update library_info set counter_value = counter_value + 0 where stud_id = 1 and
+stud_name = 'ramesh' and book_id = 110 and date_of_issue = '09/05/2022';
+InvalidRequest: Error from server: code=2200 [Invalid query] message="Unable to coerce
+'09/05/2022' to a formatted date (long)"
+cqlsh:library> update library_info set counter_value = counter_value + 0 where stud_id = 1 and
+stud_name = 'ramesh' and book_id = 110 and date_of_issue = '2022-05-09';
+InvalidRequest: Error from server: code=2200 [Invalid query] message="Some clustering keys
+are missing: book_name"
+cqlsh:library> update library_info set counter_value = counter_value + 0 where stud_id = 1 and
+stud_name = 'ramesh' and book_id = 110 and date_of_issue = '2022-05-09' and
+book_name="life or death";
+SyntaxException: line 1:181 no viable alternative at input ';' (...date_of_issue = '2022-05-09' and
+book_name=["life or deat]h";)
+cqlsh:library> update library_info set counter_value = counter_value + 0 where stud_id = 1 and
+stud_name = 'ramesh' and book_id = 110 and date_of_issue = '2022-05-09' and
+book_name='life or death';
+cqlsh:library> update library_info set counter_value = counter_value + 0 where stud_id = 2 and
+stud_name = 'suresh' and book_id = 111 and date_of_issue = '2022-05-08' and
+book_name='rich dad poor dad';
+cqlsh:library> select * from library_info
+... ;
+stud_id | stud_name | book_name | book_id | date_of_issue | counter_value
+---------+-----------+-------------------+---------+---------------+---------------
+1 | ramesh | life or death | 110 | 2022-05-09 | 0
+2 | suresh | rich dad poor dad | 111 | 2022-05-08 | 0
+(2 rows)
+cqlsh:library> update library_info set counter_value = counter_value + 0 where stud_id = 3 and
+stud_name = 'babu' and book_id = 112 and date_of_issue = '2022-05-07' and book_name='ek
+ka double';
+cqlsh:library> select * from library_info ;
+stud_id | stud_name | book_name | book_id | date_of_issue | counter_value
+---------+-----------+-------------------+---------+---------------+---------------
+1 | ramesh | life or death | 110 | 2022-05-09 | 0
+2 | suresh | rich dad poor dad | 111 | 2022-05-08 | 0
+3 | babu | ek ka double | 112 | 2022-05-07 | 0
+(3 rows)
+cqlsh:library> update library_info set counter_value = counter_value + 0 where stud_id = 4 and
+stud_name = 'raju' and book_id = 113 and date_of_issue = '2022-05-08' and
+book_name='ITUS';
+cqlsh:library> select * from library_info ;
+stud_id | stud_name | book_name | book_id | date_of_issue | counter_value
+---------+-----------+-------------------+---------+---------------+---------------
+1 | ramesh | life or death | 110 | 2022-05-09 | 0
+2 | suresh | rich dad poor dad | 111 | 2022-05-08 | 0
+4 | raju | ITUS | 113 | 2022-05-08 | 0
+3 | babu | ek ka double | 112 | 2022-05-07 | 0
+(4 rows)
+cqlsh:library> update library_info set counter_value=counter_value+1 where stud_id=1
+... ;
+InvalidRequest: Error from server: code=2200 [Invalid query] message="Some clustering keys
+are missing: stud_name, book_name, book_id, date_of_issue"
+cqlsh:library> update library_info set counter_value=counter_value+1 where stud_id=1 and
+stud_name='ramesh' and  book_name='life or death' and book_id=110 and
+date_of_issue='2022-05-09';
+cqlsh:library> select * from library_info ;
+stud_id | stud_name | book_name | book_id | date_of_issue | counter_value
+---------+-----------+-------------------+---------+---------------+---------------
+1 | ramesh | life or death | 110 | 2022-05-09 | 1
+2 | suresh | rich dad poor dad | 111 | 2022-05-08 | 0
+4 | raju | ITUS | 113 | 2022-05-08 | 0
+3 | babu | ek ka double | 112 | 2022-05-07 | 0
+(4 rows)
+cqlsh:library> update library_info set counter_value = counter_value + 0 where stud_id = 112
+and stud_name = 'shyam' and book_id = 123 and date_of_issue = '2022-05-08' and
+book_name='BDA';
+cqlsh:library> select * from library_info ;
+stud_id | stud_name | book_name | book_id | date_of_issue | counter_value
+---------+-----------+-------------------+---------+---------------+---------------
+1 | ramesh | life or death | 110 | 2022-05-09 | 1
+2 | suresh | rich dad poor dad | 111 | 2022-05-08 | 0
+4 | raju | ITUS | 113 | 2022-05-08 | 0
+112 | shyam | BDA | 123 | 2022-05-08 | 0
+3 | babu | ek ka double | 112 | 2022-05-07 | 0
+(5 rows)
+cqlsh:library> update library_info set counter_value=counter_value+2 where stud_id=112 and
+stud_name='shyam' and  book_name='BDA' and book_id=123 and date_of_issue='2022-05-08';
+cqlsh:library> select * from library_info ;
+stud_id | stud_name | book_name | book_id | date_of_issue | counter_value
+---------+-----------+-------------------+---------+---------------+---------------
+1 | ramesh | life or death | 110 | 2022-05-09 | 1
+2 | suresh | rich dad poor dad | 111 | 2022-05-08 | 0
+4 | raju | ITUS | 113 | 2022-05-08 | 0
+112 | shyam | BDA | 123 | 2022-05-08 | 2
+3 | babu | ek ka double | 112 | 2022-05-07 | 0
+(5 rows)
+cqlsh:library> select stud_id, stud_name, book_name, counter_value from library_info where
+stud_id=11;
+stud_id | stud_name | book_name | counter_value
+---------+-----------+-----------+---------------
+(0 rows)
+cqlsh:library> select stud_id, stud_name, book_name, counter_value from library_info where
+stud_id=112;
+stud_id | stud_name | book_name | counter_value
+---------+-----------+-----------+---------------
+112 | shyam | BDA | 2
+(1 rows)
+cqlsh:library> copy to library.library_info(stud_id, stud_name, book_name, book_id,
+date_of_issue, counter_value) to '/home/khushil/lib.csv';
+Improper copy command.
+cqlsh:library> copy library.library_info(stud_id, stud_name, book_name, book_id, date_of_issue,
+counter_value) to '/home/khushil/lib.csv';
+Using 11 child processes
+Can't open '/home/khushil/lib.csv' for writing: [Errno 2] No such file or directory:
+'/home/khushil/lib.csv'
+cqlsh:library> copy library.library_info(stud_id, stud_name, book_name, book_id, date_of_issue,
+counter_value) to '/khushil/lib.csv';
+Using 11 child processes
+Can't open '/khushil/lib.csv' for writing: [Errno 2] No such file or directory: '/khushil/lib.csv'
+cqlsh:library> copy library.library_info(stud_id, stud_name, book_name, book_id, date_of_issue,
+counter_value) to '/1bm19cs072/lib.csv';
+Using 11 child processes
+Can't open '/1bm19cs072/lib.csv' for writing: [Errno 2] No such file or directory:
+'/1bm19cs072/lib.csv'
+cqlsh:library> copy library.library_info(stud_id, stud_name, book_name, book_id, date_of_issue,
+counter_value) to '/home/1bm19cs072/lib.csv';
+Using 11 child processes
+Can't open '/home/1bm19cs072/lib.csv' for writing: [Errno 2] No such file or directory:
+'/home/1bm19cs072/lib.csv'
+cqlsh:library> copy library.library_info(stud_id, stud_name, book_name, book_id, date_of_issue,
+counter_value) to '/home/bmsce/1bm19cs072/lib.csv';
+Using 11 child processes
+Starting copy of library.library_info with columns [stud_id, stud_name, book_name, book_id,
+date_of_issue, counter_value].
+Processed: 5 rows; Rate: 27 rows/s; Avg. rate: 27 rows/s
+5 rows exported to 1 files in 0.201 seconds.
+cqlsh:library>
+cqlsh:library>
